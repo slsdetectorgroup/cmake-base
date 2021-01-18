@@ -32,21 +32,11 @@ if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
     set(SLS_MASTER_PROJECT ON)
 endif()
 
-# option (SLS_USE_HDF5 "HDF5 File format" OFF)
-# option (SLS_USE_TEXTCLIENT "Text Client" ON)
-# option (SLS_USE_RECEIVER "Receiver" ON)
-# option (SLS_USE_GUI "GUI" OFF)
-# option (SLS_USE_SIMULATOR "Simulator" OFF)
+
 option (PSI_USE_TESTS "TESTS" OFF)
-# option (SLS_USE_INTEGRATION_TESTS "Integration Tests" OFF)
 # option(SLS_USE_SANITIZER "Sanitizers for debugging" OFF)
-# option(SLS_USE_PYTHON "Python bindings" OFF)
-# option(SLS_USE_CTBGUI "ctb GUI" OFF)
-# option(SLS_BUILD_DOCS "docs" OFF)
-# option(SLS_BUILD_EXAMPLES "examples" OFF)
-# option(SLS_TUNE_LOCAL "tune to local machine" OFF)
-# option(SLS_DEVEL_HEADERS "install headers for devel" OFF)
-# option(SLS_USE_MOENCH "compile zmq and post processing for Moench" OFF)
+option(PSI_USE_PYTHON "Python bindings" OFF)
+
 
 # # set(ClangFormat_BIN_NAME clang-format)
 # set(ClangFormat_EXCLUDE_PATTERNS    "build/" 
@@ -179,11 +169,11 @@ add_subdirectory(app)
 
 
 
-# if (SLS_USE_PYTHON)
-#     find_package (Python 3.6 COMPONENTS Interpreter Development)
-#     add_subdirectory(libs/pybind11)
-#     add_subdirectory(python)
-# endif(SLS_USE_PYTHON)
+if (PSI_USE_PYTHON)
+    find_package (Python 3.6 COMPONENTS Interpreter Development)
+    add_subdirectory(libs/pybind11)
+    add_subdirectory(python)
+endif(PSI_USE_PYTHON)
 
 # if (SLS_USE_CTBGUI)
 #     add_subdirectory(ctbGui)
