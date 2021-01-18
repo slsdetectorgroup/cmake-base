@@ -1,0 +1,216 @@
+cmake_minimum_required(VERSION 3.12)
+project(cmake-base)
+set(PROJECT_VERSION 1.0.0)
+include(CheckIPOSupported)
+set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+
+cmake_policy(SET CMP0074 NEW)
+include(cmake/project_version.cmake)
+
+# Include additional modules that are used unconditionally
+include(GNUInstallDirs)
+
+# If conda build, always set lib dir to 'lib'
+if($ENV{CONDA_BUILD})
+  set(CMAKE_INSTALL_LIBDIR "lib")
+endif()
+
+# Set lower / upper case project names
+string(TOUPPER "${PROJECT_NAME}" PROJECT_NAME_UPPER)
+string(TOLOWER "${PROJECT_NAME}" PROJECT_NAME_LOWER)
+
+# Set targets export name (used by slsDetectorPackage and dependencies)
+set(TARGETS_EXPORT_NAME "${PROJECT_NAME_LOWER}-targets")
+#set(namespace "${PROJECT_NAME}::")
+
+set(CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake" ${CMAKE_MODULE_PATH})
+
+
+# Check if project is being used directly or via add_subdirectory
+set(SLS_MASTER_PROJECT OFF)
+if (CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
+    set(SLS_MASTER_PROJECT ON)
+endif()
+
+# option (SLS_USE_HDF5 "HDF5 File format" OFF)
+# option (SLS_USE_TEXTCLIENT "Text Client" ON)
+# option (SLS_USE_RECEIVER "Receiver" ON)
+# option (SLS_USE_GUI "GUI" OFF)
+# option (SLS_USE_SIMULATOR "Simulator" OFF)
+option (PSI_USE_TESTS "TESTS" OFF)
+# option (SLS_USE_INTEGRATION_TESTS "Integration Tests" OFF)
+# option(SLS_USE_SANITIZER "Sanitizers for debugging" OFF)
+# option(SLS_USE_PYTHON "Python bindings" OFF)
+# option(SLS_USE_CTBGUI "ctb GUI" OFF)
+# option(SLS_BUILD_DOCS "docs" OFF)
+# option(SLS_BUILD_EXAMPLES "examples" OFF)
+# option(SLS_TUNE_LOCAL "tune to local machine" OFF)
+# option(SLS_DEVEL_HEADERS "install headers for devel" OFF)
+# option(SLS_USE_MOENCH "compile zmq and post processing for Moench" OFF)
+
+# # set(ClangFormat_BIN_NAME clang-format)
+# set(ClangFormat_EXCLUDE_PATTERNS    "build/" 
+#                                     "libs/" 
+#                                     "slsDetectorCalibration/" 
+#                                     "ctbGui/" 
+#                                     "manual/"
+#                                     "python/"
+#                                     "sample/"
+#                                     ${CMAKE_BINARY_DIR})
+# find_package(ClangFormat)
+
+# #Enable LTO if available
+check_ipo_supported(RESULT PSI_LTO_AVAILABLE)
+message(STATUS "Link time optimization is available:" ${PSI_LTO_AVAILABLE})
+
+#Export the compile commands as json. This is very useful for 
+# interfacing with other tooling or debugging build options 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
+#Set the default build to Release
+if (NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
+  message(STATUS "No build type selected, default to Release")
+  set(CMAKE_BUILD_TYPE "Release" CACHE STRING "Build type (default Release)" FORCE)
+endif()
+
+
+# #Add two fake libraries to manage options
+# add_library(slsProjectOptions INTERFACE)
+# add_library(slsProjectWarnings INTERFACE)
+# target_compile_features(slsProjectOptions INTERFACE cxx_std_11)
+# target_compile_options(slsProjectWarnings INTERFACE 
+#                                             -Wall
+#                                             -Wextra
+#                                             -Wno-unused-parameter #Needs to be slowly mitigated
+#                                             # -Wold-style-cast
+#                                             -Wnon-virtual-dtor
+#                                             -Woverloaded-virtual
+#                                             -Wdouble-promotion
+#                                             -Wformat=2
+#                                             -Wredundant-decls
+#                                             # -Wconversion
+#                                             -Wvla
+#                                             -Wdouble-promotion
+#                                             -Werror=return-type
+
+#                                  )
+
+
+# #Testing for minimum version for compilers
+# if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang")
+#     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 3.2)
+#         message(FATAL_ERROR "Clang version must be at least 3.2!")
+#     endif()
+#     target_compile_options(slsProjectWarnings INTERFACE -Wshadow) #Clag does not warn on constructor
+# elseif ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
+#     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 4.8)
+#             message(FATAL_ERROR "GCC version must be at least 4.8!")
+#     endif()
+
+#     if (CMAKE_CXX_COMPILER_VERSION VERSION_LESS 5)
+#             target_compile_options(slsProjectWarnings INTERFACE 
+#                                              -Wno-missing-field-initializers)
+#     endif()
+    
+#     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 6.0)
+#         target_compile_options(slsProjectWarnings INTERFACE 
+#                                                 -Wno-misleading-indentation # mostly in rapidjson remove using clang format
+#                                                 -Wduplicated-cond
+#                                                 -Wnull-dereference )
+
+#     endif()
+#     if (CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 8.0)
+#         target_compile_options(slsProjectWarnings INTERFACE 
+#                                                 -Wno-class-memaccess )
+
+#     endif()
+# endif()
+
+
+# if(SLS_USE_SANITIZER)
+#     target_compile_options(slsProjectOptions INTERFACE -fsanitize=address,undefined -fno-omit-frame-pointer)
+#     target_link_libraries(slsProjectOptions INTERFACE -fsanitize=address,undefined)
+#     # target_compile_options(slsProjectOptions INTERFACE -fsanitize=thread)
+#     # target_link_libraries(slsProjectOptions INTERFACE -fsanitize=thread)
+# endif()
+
+# if(SLS_TUNE_LOCAL)
+#     target_compile_options(slsProjectOptions INTERFACE -mtune=native -march=native)
+# endif()
+
+
+# #rapidjson
+# add_library(rapidjson INTERFACE)
+# target_include_directories(rapidjson INTERFACE
+#     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/libs/rapidjson>  
+# )
+
+# # Install fake the libraries
+# install(TARGETS slsProjectOptions slsProjectWarnings rapidjson
+#     EXPORT "${TARGETS_EXPORT_NAME}"
+#     LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#     ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
+#     PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+# )
+
+# set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+# set(CMAKE_INSTALL_RPATH $ORIGIN)
+# # set(CMAKE_BUILD_WITH_INSTALL_RPATH TRUE)
+# set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+
+if (PSI_USE_TESTS)
+    enable_testing()
+    add_subdirectory(tests)
+endif(PSI_USE_TESTS)
+
+#This is a shared library that we want to use
+add_subdirectory(SomeLibrary)
+
+#This is where the project wide binaries reside
+add_subdirectory(app)
+
+# find_package(ZeroMQ 4 REQUIRED)
+
+
+
+# if (SLS_USE_TEXTCLIENT)
+#     add_subdirectory(slsDetectorSoftware)
+# endif (SLS_USE_TEXTCLIENT)
+
+
+
+# if (SLS_USE_PYTHON)
+#     find_package (Python 3.6 COMPONENTS Interpreter Development)
+#     add_subdirectory(libs/pybind11)
+#     add_subdirectory(python)
+# endif(SLS_USE_PYTHON)
+
+# if (SLS_USE_CTBGUI)
+#     add_subdirectory(ctbGui)
+# endif(SLS_USE_CTBGUI)
+
+# configure_file( .clang-tidy  
+#     ${CMAKE_BINARY_DIR}/.clang-tidy  
+# )
+
+# if (SLS_BUILD_EXAMPLES)
+#     add_subdirectory(sample)
+# endif(SLS_BUILD_EXAMPLES)
+
+# if(SLS_BUILD_DOCS)
+#     add_subdirectory(docs)
+# endif(SLS_BUILD_DOCS)
+
+
+# if(SLS_USE_MOENCH)
+#     add_subdirectory(slsDetectorCalibration/moenchExecutables)
+# endif(SLS_USE_MOENCH)
+
+# if(SLS_MASTER_PROJECT)
+#     # Set install dir CMake packages
+#     set(CMAKE_INSTALL_DIR "share/cmake/${PROJECT_NAME}")
+#     # Set the list of exported targets
+#     set(PROJECT_LIBRARIES slsSupportShared slsDetectorShared slsReceiverShared)
+#     # Generate and install package config file and version
+#     include(cmake/package_config.cmake)
+# endif()
